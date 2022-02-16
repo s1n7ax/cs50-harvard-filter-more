@@ -3,64 +3,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-// Convert image to grayscale
-void grayscale(int height, int width, RGBTRIPLE image[height][width])
-{
-    for(int row = 0; row < height; row++) {
-        for(int pixel = 0; pixel < width; pixel++) {
-            int average = getAverageRGBValue(image[row][pixel]);
-            image[row][pixel] = getRGBFromGrayscaleValue(average);
-        }
-    }
-
-    return;
+int roundupToNearestInt(double value) {
+    return (int) ((value - floor(value) < 0.5) ? floor(value): ceil(value) );
 }
-
-// Reflect image horizontally
-void reflect(int height, int width, RGBTRIPLE image[height][width])
-{
-    int middle = (int)(width / 2);
-
-    for(int row = 0; row < height; row++) {
-        for(int pixel = 0; pixel < middle; pixel++) {
-            RGBTRIPLE tmp = image[row][pixel];
-            image[row][pixel] = image[row][width - 1 - pixel];
-            image[row][width - 1 - pixel] = tmp;
-        }
-    }
-
-    return;
-}
-
-// Blur image
-void blur(int height, int width, RGBTRIPLE image[height][width])
-{
-    for(int row = 0; row < height; row++) {
-        for(int column = 0; column < width; column++) {
-            image[row][column] = getBoxBlurPixel(height, width, image, row, column);
-        }
-    }
-
-    return;
-}
-
-// Detect edges
-void edges(int height, int width, RGBTRIPLE image[height][width])
-{
-    for(int row = 0; row < height; row++) {
-        for(int column = 0; column < width; column++) {
-            image[row][column] = getEdgeDetectedPixel(height, width, image, row, column);
-        }
-    }
-
-    return;
-}
-
 
 int getAverageRGBValue(RGBTRIPLE pixel)
 {
     double total = (pixel.rgbtBlue + pixel.rgbtGreen + pixel.rgbtRed) / 3.0;
-    return (int) ((total - floor(total) > 0.5) ? ceil(total) : floor(total));
+    return roundupToNearestInt(total);
 }
 
 RGBTRIPLE getRGBFromGrayscaleValue(int value)
@@ -74,6 +24,8 @@ RGBTRIPLE getRGBFromGrayscaleValue(int value)
     return pixel;
 }
 
+int tmppp = 0;
+
 RGBTRIPLE getBoxBlurPixel(int height, int width, RGBTRIPLE image[height][width], int row, int column) {
     int pixelCount = 0;
     int r_total = 0;
@@ -81,6 +33,7 @@ RGBTRIPLE getBoxBlurPixel(int height, int width, RGBTRIPLE image[height][width],
     int b_total = 0;
 
     for(int i = -1; i <= 1; i++) {
+
         for(int j = -1; j <= 1; j++) {
             int boxRow = row + i;
             int boxColumn = column + j;
@@ -101,11 +54,15 @@ RGBTRIPLE getBoxBlurPixel(int height, int width, RGBTRIPLE image[height][width],
         }
     }
 
+    double r_average = (double)r_total/(double)pixelCount;
+    double g_average = (double)g_total/(double)pixelCount;
+    double b_average = (double)b_total/(double)pixelCount;
+
     RGBTRIPLE pixel;
 
-    pixel.rgbtRed = r_total/pixelCount;
-    pixel.rgbtGreen = g_total/pixelCount;
-    pixel.rgbtBlue = b_total/pixelCount;
+    pixel.rgbtRed = roundupToNearestInt(r_average);
+    pixel.rgbtGreen = roundupToNearestInt(g_average);
+    pixel.rgbtBlue = roundupToNearestInt(b_average);
 
     return pixel;
 }
@@ -188,4 +145,67 @@ RGBTRIPLE getEdgeDetectedPixel(int height, int width, RGBTRIPLE image[height][wi
     edge_pixel.rgbtBlue = b_edge;
 
     return edge_pixel;
+}
+
+
+// Convert image to grayscale
+void grayscale(int height, int width, RGBTRIPLE image[height][width])
+{
+    for(int row = 0; row < height; row++) {
+        for(int pixel = 0; pixel < width; pixel++) {
+            int average = getAverageRGBValue(image[row][pixel]);
+            image[row][pixel] = getRGBFromGrayscaleValue(average);
+        }
+    }
+
+    return;
+}
+
+// Reflect image horizontally
+void reflect(int height, int width, RGBTRIPLE image[height][width])
+{
+    int middle = (int)(width / 2);
+
+    for(int row = 0; row < height; row++) {
+        for(int pixel = 0; pixel < middle; pixel++) {
+            RGBTRIPLE tmp = image[row][pixel];
+            image[row][pixel] = image[row][width - 1 - pixel];
+            image[row][width - 1 - pixel] = tmp;
+        }
+    }
+
+    return;
+}
+
+// Blur image
+void blur(int height, int width, RGBTRIPLE image[height][width])
+{
+    RGBTRIPLE newImage[height][width];
+
+    for(int row = 0; row < height; row++) {
+        for(int column = 0; column < width; column++) {
+            newImage[row][column] = getBoxBlurPixel(height, width, image, row, column);
+        }
+    }
+
+    //setting the new image to old image
+    for(int row = 0; row < height; row++) {
+        for(int column = 0; column < width; column++) {
+            image[row][column] = newImage[row][column];
+        }
+    }
+
+    return;
+}
+
+// Detect edges
+void edges(int height, int width, RGBTRIPLE image[height][width])
+{
+    for(int row = 0; row < height; row++) {
+        for(int column = 0; column < width; column++) {
+            image[row][column] = getEdgeDetectedPixel(height, width, image, row, column);
+        }
+    }
+
+    return;
 }
